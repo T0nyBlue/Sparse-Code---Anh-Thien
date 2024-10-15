@@ -10,16 +10,16 @@ P = 0.642;
 P1 = 2.2e-4;
 
 N = 56;
-packet = 10000000;
+packet = 10000;
 
 diff_bits_no_coding = zeros(1,length(sigma_mu));
 diff_bits = zeros(1,length(sigma_mu));
 
 % Testing MRAM with Sparse Code and Hamming Code
 tic;
-parfor ct = 1:length(sigma_mu)
+for ct = 1:length(sigma_mu)
     for page = 1:packet
-        disp([num2str((page/packet)*100) '%'])
+        disp([num2str((ct/length(sigma_mu) + page/packet)*100) '%'])
         % Generate user data
         user_data = double(rand(1,N) >= 0.5);
 
@@ -38,7 +38,7 @@ parfor ct = 1:length(sigma_mu)
         % r_th = optimizing_rth(sigma_mu(ct)/100, P1, P);
         
         % Decode using hamming code
-        data_decoded = hamming_code_57p63_decoder(received_data >= 1.5, sigma_mu(ct)/100);
+        data_decoded = hamming_code_57p63_decoder(received_data >= 0.5, sigma_mu(ct)/100);
 
         % Demodulation using sparse code
         user_data_sparsecode_demodulation = sparse_code_decoder(data_decoded);
