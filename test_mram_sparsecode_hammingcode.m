@@ -18,6 +18,9 @@ diff_bits = zeros(1,length(sigma_mu));
 % Testing MRAM with Sparse Code and Hamming Code
 tic;
 parfor ct = 1:length(sigma_mu)
+    % Initialize local counter for each parallel worker
+    local_diff_bits = 0;
+
     for page = 1:packet
         disp([num2str((page/packet)*100) '%'])
         % Generate user data
@@ -46,9 +49,12 @@ parfor ct = 1:length(sigma_mu)
         % output_decoding = (output >= threshold);
         % decoding = my_sparse_code_decoder(output_decoding);
 
-        % Calculate difference bit
-        diff_bits(1,ct) = diff_bits(1,ct) + sum(abs(user_data - user_data_sparsecode_demodulation))
+        % Calculate local difference bits
+        local_diff_bits = local_diff_bits + sum(abs(user_data - user_data_sparsecode_demodulation));
     end
+
+    % Calculate difference bits
+    diff_bits(ct) = local_diff_bits;
 end
 toc;
 
