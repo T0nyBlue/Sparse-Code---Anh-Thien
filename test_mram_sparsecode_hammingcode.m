@@ -4,7 +4,7 @@ clc
 % Init
 sigma_mu = [8 9.5 11 12 13 14 15 16];
 
-P = 0.642;
+P = 1/2;
 % P = [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9];
 % P = 0.5;
 P1 = 2.2e-4;
@@ -41,10 +41,10 @@ parfor ct = 1:length(sigma_mu)
 
         % Calculate rth
         % r_th = calc_rth(sigma_mu(ct)/100);
-        % r_th = optimizing_rth(sigma_mu(ct)/100, P1, P);
+        r_th = optimizing_rth(sigma_mu(ct)/100, P1, P);
         
         % Decode using hamming code
-        data_decoded = hamming_code_57p63_decoder(received_data >= 1.5, sigma_mu(ct)/100);
+        data_decoded = hamming_code_57p63_decoder(received_data >= r_th, sigma_mu(ct)/100);
 
         % Demodulation using sparse code
         user_data_sparsecode_demodulation = sparse_code_decoder(data_decoded);
