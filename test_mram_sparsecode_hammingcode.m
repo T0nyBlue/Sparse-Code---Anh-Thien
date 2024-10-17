@@ -9,47 +9,61 @@ P = 0.642;
 % P = 0.5;
 P1 = 2.2e-4;
 
-N = 54;
-packet = N*1000000;
+N = 56;
+packet = 10000000;
 
 diff_bits_no_coding = zeros(1,length(sigma_mu));
 diff_bits = zeros(1,length(sigma_mu));
 
+% Create a waitbar
+% hWaitbar = waitbar(0, 'Processing...');
+
 % Testing MRAM with Sparse Code and Hamming Code
 tic;
-for ct = 1:length(sigma_mu)
+parfor ct = 1:length(sigma_mu)
+    % Initialize local counter for each parallel worker
+    local_diff_bits = 0;
+
     for page = 1:packet
-        disp([num2str((ct/length(sigma_mu) + page/packet)*100) '%'])
+        disp(['Processing of calculating BER at ' num2str(sigma_mu(ct)) '% : ' num2str((page/packet)*100) '%'])
         % Generate user data
         user_data = double(rand(1,N) >= 0.5);
 
         % Modulate user data using sparse code
-        user_data_sparsecode_modulation = my_sparse_code_encoder(user_data);
+        user_data_sparsecode_modulation = sparse_code_encoder(user_data);
         
         % Encode using hamming code
         code_word = hamming_code_57p63_encoder(user_data_sparsecode_modulation);
 
         % Passing code word through cascased channel
-        % received_data = cascased_channel(code_word, sigma_mu(ct)/100);
-        received_data = cascased_channel_with_P(code_word, sigma_mu(ct)/100, P1);
+        received_data = cascased_channel(code_word, sigma_mu(ct)/100);
+        % received_data = cascased_channel_with_P1(code_word, sigma_mu(ct)/100, P1);
 
         % Calculate rth
         % r_th = calc_rth(sigma_mu(ct)/100);
-        r_th = optimizing_rth(sigma_mu(ct)/100, P1, P);
+        % r_th = optimizing_rth(sigma_mu(ct)/100, P1, P);
         
         % Decode using hamming code
-        data_decoded = hamming_code_57p63_decoder(received_data >= r_th, sigma_mu(ct)/100);
+        data_decoded = hamming_code_57p63_decoder(received_data >= 1.5, sigma_mu(ct)/100);
 
         % Demodulation using sparse code
-        user_data_sparsecode_demodulation = my_sparse_code_decoder(data_decoded);
+        user_data_sparsecode_demodulation = sparse_code_decoder(data_decoded);
 
         % output_decoding = (output >= threshold);
         % decoding = my_sparse_code_decoder(output_decoding);
 
-        % Calculate difference bit
-        diff_bits(1,ct) = diff_bits(1,ct) + sum(abs(user_data - user_data_sparsecode_demodulation))
+        % Calculate local difference bits
+        local_diff_bits = local_diff_bits + sum(abs(user_data - user_data_sparsecode_demodulation));
     end
+
+    % Calculate difference bits
+    diff_bits(ct) = local_diff_bits;
+
+    % Update waitbar
+    % waitbar(ct / length(sigma_mu), hWaitbar, sprintf('Processing sigma_mu = %.1f', sigma_mu(ct)));
 end
+
+% close(hWaitbar); % Close waitbar after completion
 toc;
 
 
@@ -68,5 +82,5 @@ semilogy(sigma_mu,BER_sc_hm_MRAM,'--b');
 xlabel('\sigma_0/\mu_0')
 ylabel('BER')
 grid on
-legend('No coding','54/63 Sparse code')
+legend('No coding','56/63 Sparse code')
 axis([8 16 1e-7 1e-1])
