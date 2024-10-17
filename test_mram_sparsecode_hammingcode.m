@@ -15,6 +15,9 @@ packet = 10000000;
 diff_bits_no_coding = zeros(1,length(sigma_mu));
 diff_bits = zeros(1,length(sigma_mu));
 
+% Create a waitbar
+% hWaitbar = waitbar(0, 'Processing...');
+
 % Testing MRAM with Sparse Code and Hamming Code
 tic;
 parfor ct = 1:length(sigma_mu)
@@ -22,7 +25,7 @@ parfor ct = 1:length(sigma_mu)
     local_diff_bits = 0;
 
     for page = 1:packet
-        disp([num2str((page/packet)*100) '%'])
+        disp(['Processing of calculating BER at ' num2str(sigma_mu(ct)) '% : ' num2str((page/packet)*100) '%'])
         % Generate user data
         user_data = double(rand(1,N) >= 0.5);
 
@@ -33,8 +36,8 @@ parfor ct = 1:length(sigma_mu)
         code_word = hamming_code_57p63_encoder(user_data_sparsecode_modulation);
 
         % Passing code word through cascased channel
-        % received_data = cascased_channel(code_word, sigma_mu(ct)/100);
-        received_data = cascased_channel_with_P1(code_word, sigma_mu(ct)/100, P1);
+        received_data = cascased_channel(code_word, sigma_mu(ct)/100);
+        % received_data = cascased_channel_with_P1(code_word, sigma_mu(ct)/100, P1);
 
         % Calculate rth
         % r_th = calc_rth(sigma_mu(ct)/100);
@@ -55,7 +58,12 @@ parfor ct = 1:length(sigma_mu)
 
     % Calculate difference bits
     diff_bits(ct) = local_diff_bits;
+
+    % Update waitbar
+    % waitbar(ct / length(sigma_mu), hWaitbar, sprintf('Processing sigma_mu = %.1f', sigma_mu(ct)));
 end
+
+% close(hWaitbar); % Close waitbar after completion
 toc;
 
 
